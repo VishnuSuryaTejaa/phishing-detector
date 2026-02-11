@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Phishing Link Detector - AI-powered URL security analysis to identify malicious phishing attempts">
+    <meta name="keywords" content="phishing, security, URL scanner, malware detection, cybersecurity">
+    <title>Phishing Link Detector | AI-Powered Security Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Background gradient -->
+    <div class="background-gradient"></div>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 5L5 12V19C5 27.5 10.5 35.1 20 37C29.5 35.1 35 27.5 35 19V12L20 5Z"
+                        stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M15 20L18.5 23.5L25 17" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <defs>
+                        <linearGradient id="gradient" x1="5" y1="5" x2="35" y2="37" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#00d4ff" />
+                            <stop offset="100%" stop-color="#7b2ff7" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>PhishGuard AI</h1>
+            </div>
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span>API Ready</span>
+            </div>
+        </header>
+
+        <!-- Hero section -->
+        <section class="hero">
+            <h2 class="hero-title">Protect Yourself from<br><span class="gradient-text">Phishing Attacks</span></h2>
+            <p class="hero-subtitle">AI-powered machine learning analyzes URLs to detect malicious phishing attempts in
+                real-time</p>
+        </section>
+
+        <!-- Scan form -->
+        <section class="scan-section">
+            <form id="scanForm" class="scan-form">
+                <div class="input-wrapper">
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M8.33333 14.1667H11.6667M6.5 17.5H13.5C14.9001 17.5 15.6002 17.5 16.135 17.2275C16.6054 16.9878 16.9878 16.6054 17.2275 16.135C17.5 15.6002 17.5 14.9001 17.5 13.5V6.5C17.5 5.09987 17.5 4.3998 17.2275 3.86502C16.9878 3.39462 16.6054 3.01217 16.135 2.77248C15.6002 2.5 14.9001 2.5 13.5 2.5H6.5C5.09987 2.5 4.3998 2.5 3.86502 2.77248C3.39462 3.01217 3.01217 3.39462 2.77248 3.86502C2.5 4.3998 2.5 5.09987 2.5 6.5V13.5C2.5 14.9001 2.5 15.6002 2.77248 16.135C3.01217 16.6054 3.39462 16.9878 3.86502 17.2275C4.3998 17.5 5.09987 17.5 6.5 17.5Z"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <input type="text" id="urlInput" class="url-input"
+                        placeholder="Enter a URL to scan for phishing threats..." required autocomplete="off">
+                </div>
+                <button type="submit" class="scan-button" id="scanButton">
+                    <span class="button-text">Scan URL</span>
+                    <svg class="button-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M18.3333 9.23333V10C18.3323 11.797 17.7504 13.5456 16.6744 14.9849C15.5985 16.4241 14.0861 17.4771 12.3628 17.9866C10.6395 18.4961 8.79771 18.4349 7.11205 17.8122C5.4264 17.1894 3.98716 16.0384 3.00912 14.5309C2.03108 13.0234 1.56648 11.2401 1.68472 9.44693C1.80296 7.65377 2.49766 5.94691 3.66525 4.58086C4.83284 3.21481 6.41064 2.26282 8.16348 1.86679C9.91632 1.47076 11.7502 1.65195 13.3917 2.38333M18.3333 3.33333L10 11.675L7.5 9.175"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Loading state -->
+            <div id="loadingState" class="loading-state hidden">
+                <div class="loading-spinner">
+                    <div></div>
+                </div>
+                <p>Analyzing URL with AI model...</p>
+            </div>
+
+            <!-- Result card -->
+            <div id="resultCard" class="result-card hidden">
+                <div class="result-header">
+                    <div class="result-icon" id="resultIcon">
+                        <!-- Icon will be injected via JS -->
+                    </div>
+                    <div class="result-info">
+                        <h3 class="result-title" id="resultTitle">Analysis Complete</h3>
+                        <p class="result-classification" id="resultClassification">Safe URL</p>
+                    </div>
+                </div>
+
+                <div class="result-url" id="resultUrl"></div>
+
+                <div class="confidence-section">
+                    <div class="confidence-label">
+                        <span>Confidence Score</span>
+                        <span class="confidence-value" id="confidenceValue">95%</span>
+                    </div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill"></div>
+                    </div>
+                </div>
+
+                <div class="risk-badge" id="riskBadge">
+                    <span class="risk-label">Risk Level:</span>
+                    <span class="risk-value" id="riskValue">Low</span>
+                </div>
+
+                <button class="scan-another-button" id="scanAnotherButton">
+                    Scan Another URL
+                </button>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h4>Machine Learning</h4>
+                <p>Random Forest classifier trained on phishing patterns</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h4>Real-time Analysis</h4>
+                <p>Instant URL scanning with 22+ extracted features</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h4>Privacy First</h4>
+                <p>All analysis happens server-side, no data stored</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with Flask, scikit-learn & AI • Protecting users from phishing attacks</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
