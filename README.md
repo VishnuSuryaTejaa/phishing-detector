@@ -1,11 +1,58 @@
 # 🛡️ Phishing Link Detector
-
+# Project title : Phishguard AI 
 An AI-powered phishing detection system using machine learning to identify malicious URLs. Built with Flask, scikit-learn, and a modern cybersecurity-themed frontend.
 
 ![Phishing Detection](https://img.shields.io/badge/Security-Phishing%20Detection-blue)
 ![Python](https://img.shields.io/badge/Python-3.8+-green)
 ![Flask](https://img.shields.io/badge/Flask-3.0-black)
 ![ML](https://img.shields.io/badge/ML-Random%20Forest-orange)
+
+# 👥 Team Details
+
+Team Name: Kernel
+
+Team Members & Contributions:
+
+Prateek Mittal – Machine Learning model development, training, evaluation, model optimization
+
+Vishnu Surya Teja – Backend development (Flask APIs, integration logic)
+
+Manvith Soma – UI/UX design, React/web interface, API integration
+
+M. Sailaxman – URL validation logic, preprocessing, threat heuristics
+
+
+# 🚨 Problem Statement
+
+Phishing attacks are one of the most common and dangerous cyber threats today. Users often click malicious links disguised as legitimate ones, leading to:
+
+Credential theft
+
+Financial fraud
+
+Malware installation
+
+Identity compromise
+
+Most users cannot distinguish between a safe and malicious URL at a glance.
+
+Goal:
+
+Build an intelligent system that can instantly analyze a URL and determine whether it is legitimate or phishing using machine learning and network-based validation.
+
+# 💡 Our Solution
+
+We developed an AI-powered phishing detection system that:
+
+Accepts a URL input from users
+
+Validates it using network-level checks
+
+Extracts structural features from the URL
+
+Uses a trained ML model to classify it
+
+Shows confidence scores and risk levels instantly
 
 ## ✨ Features
 
@@ -269,6 +316,24 @@ const API_URL = 'http://localhost:5000/api';
 - [ ] Historical analysis and trends
 - [ ] Browser extension
 - [ ] Real-time phishing database updates
+
+# ⚠️ Challenges Faced
+
+Finding clean and labeled phishing datasets
+
+Model predicting most URLs as legitimate initially
+
+Handling class imbalance
+
+Integrating frontend + backend + ML smoothly
+
+Designing meaningful URL features
+
+Deployment issues and environment setup
+
+# 🎥 Demo Video
+
+(Add your video link here)
 
 ## 📄 License
 
