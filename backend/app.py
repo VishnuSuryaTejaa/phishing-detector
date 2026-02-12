@@ -80,6 +80,22 @@ def predict():
         prediction = model.predict(feature_vector)[0]
         probabilities = model.predict_proba(feature_vector)[0]
         
+        # Get network validation data
+        from urllib.parse import urlparse
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc or parsed.path.split('/')[0]
+            
+            # Import network validator
+            import sys
+            sys.path.append('Network_Validator')
+            from network.network_validator import network_scan
+            
+            network_data = network_scan(domain)
+        except Exception as e:
+            print(f"Network validation failed: {e}")
+            network_data = None
+        
         # Prepare response
         result = {
             'url': url,
@@ -90,8 +106,29 @@ def predict():
                 'phishing': float(probabilities[1])
             },
             'confidence_score': float(max(probabilities)),
-            'risk_level': get_risk_level(probabilities[1])
+            'risk_level': get_risk_level(probabilities[1]),
+            'features': {
+                'url_length': features_dict.get('url_length'),
+                'has_https': features_dict.get('has_https') == 1,
+                'has_ip_address': features_dict.get('has_ip_address') == 1,
+                'has_suspicious_tld': features_dict.get('has_suspicious_tld') == 1,
+                'num_suspicious_keywords': features_dict.get('num_suspicious_keywords'),
+                'domain_entropy': round(features_dict.get('domain_entropy', 0), 2)
+            }
         }
+        
+        # Add network validation data if available
+        if network_data:
+            result['network_analysis'] = {
+                'dns_resolves': network_data.get('dns_resolves'),
+                'ip_address': network_data.get('ip_address'),
+                'domain_age_days': network_data.get('domain_age_days'),
+                'ssl_valid': network_data.get('ssl_valid'),
+                'hosting_country': network_data.get('hosting_country'),
+                'isp': network_data.get('isp'),
+                'network_risk_score': network_data.get('network_risk_score'),
+                'risk_reasons': network_data.get('reasons', [])
+            }
         
         return jsonify(result), 200
         
@@ -103,6 +140,7 @@ def predict():
         return jsonify({
             'error': f'Prediction failed: {str(e)}'
         }), 500
+
 
 
 def get_risk_level(phishing_probability):

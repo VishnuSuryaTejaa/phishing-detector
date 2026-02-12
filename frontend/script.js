@@ -144,9 +144,91 @@ function displayResult(data) {
     confidenceValue.textContent = `${confidence.toFixed(1)}%`;
     confidenceFill.style.width = `${confidence}%`;
 
+    // Update detailed confidence
+    const legitConf = (data.confidence.legitimate * 100).toFixed(1);
+    const phishConf = (data.confidence.phishing * 100).toFixed(1);
+    document.getElementById('legitConfidence').textContent = `${legitConf}%`;
+    document.getElementById('phishingConfidence').textContent = `${phishConf}%`;
+
     // Update risk level
     riskValue.textContent = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1);
     riskBadge.className = 'risk-badge ' + riskLevel;
+
+    // Display URL features
+    if (data.features) {
+        const featureGrid = document.getElementById('featureGrid');
+        featureGrid.innerHTML = '';
+        
+        const features = [
+            { label: 'URL Length', value: data.features.url_length + ' chars', icon: '📏' },
+            { label: 'HTTPS', value: data.features.has_https ? 'Yes' : 'No', icon: '🔒', highlight: !data.features.has_https },
+            { label: 'IP Address', value: data.features.has_ip_address ? 'Yes' : 'No', icon: '🌐', highlight: data.features.has_ip_address },
+            { label: 'Suspicious TLD', value: data.features.has_suspicious_tld ? 'Yes' : 'No', icon: '🏷️', highlight: data.features.has_suspicious_tld },
+            { label: 'Phishing Keywords', value: data.features.num_suspicious_keywords, icon: '🔍', highlight: data.features.num_suspicious_keywords > 0 },
+            { label: 'Domain Randomness', value: data.features.domain_entropy.toFixed(2), icon: '🎲' }
+        ];
+
+        features.forEach(feature => {
+            const div = document.createElement('div');
+            div.className = 'feature-item' + (feature.highlight ? ' warning' : '');
+            div.innerHTML = `
+                <span class="feature-icon">${feature.icon}</span>
+                <div class="feature-content">
+                    <span class="feature-label">${feature.label}</span>
+                    <span class="feature-value">${feature.value}</span>
+                </div>
+            `;
+            featureGrid.appendChild(div);
+        });
+    }
+
+    // Display network analysis
+    if (data.network_analysis) {
+        const networkSection = document.getElementById('networkSection');
+        const networkGrid = document.getElementById('networkGrid');
+        networkSection.classList.remove('hidden');
+        networkGrid.innerHTML = '';
+
+        const network = data.network_analysis;
+        const networkItems = [
+            { label: 'DNS Status', value: network.dns_resolves ? 'Resolves' : 'Failed', icon: '🌍', highlight: !network.dns_resolves },
+            { label: 'IP Address', value: network.ip_address || 'Unknown', icon: '📍' },
+            { label: 'Domain Age', value: network.domain_age_days ? `${network.domain_age_days} days` : 'Unknown', icon: '📅', highlight: network.domain_age_days && network.domain_age_days < 90 },
+            { label: 'SSL Certificate', value: network.ssl_valid ? 'Valid' : 'Invalid', icon: '🔐', highlight: !network.ssl_valid },
+            { label: 'Location', value: network.hosting_country || 'Unknown', icon: '🗺️' },
+            { label: 'ISP', value: network.isp || 'Unknown', icon: '🏢' },
+            { label: 'Network Risk', value: `${network.network_risk_score}/15`, icon: '⚡', highlight: network.network_risk_score > 5 }
+        ];
+
+        networkItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'feature-item' + (item.highlight ? ' warning' : '');
+            div.innerHTML = `
+                <span class="feature-icon">${item.icon}</span>
+                <div class="feature-content">
+                    <span class="feature-label">${item.label}</span>
+                    <span class="feature-value">${item.value}</span>
+                </div>
+            `;
+            networkGrid.appendChild(div);
+        });
+
+        // Add risk reasons if any
+        if (network.risk_reasons && network.risk_reasons.length > 0) {
+            const reasonsDiv = document.createElement('div');
+            reasonsDiv.className = 'feature-item warning full-width';
+            reasonsDiv.innerHTML = `
+                <span class="feature-icon">⚠️</span>
+                <div class="feature-content">
+                    <span class="feature-label">Risk Factors</span>
+                    <span class="feature-value">${network.risk_reasons.join(', ')}</span>
+                </div>
+            `;
+            networkGrid.appendChild(reasonsDiv);
+        }
+    } else {
+        document.getElementById('networkSection').classList.add('hidden');
+    }
 
     // Add animation
     resultCard.style.animation = 'none';

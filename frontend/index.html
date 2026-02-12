@@ -102,9 +102,10 @@
 
                 <div class="result-url" id="resultUrl"></div>
 
+                <!-- Confidence Breakdown -->
                 <div class="confidence-section">
                     <div class="confidence-label">
-                        <span>Confidence Score</span>
+                        <span>Overall Confidence</span>
                         <span class="confidence-value" id="confidenceValue">95%</span>
                     </div>
                     <div class="confidence-bar">
@@ -112,9 +113,33 @@
                     </div>
                 </div>
 
+                <!-- Detailed Confidence -->
+                <div class="confidence-details" id="confidenceDetails">
+                    <div class="confidence-item safe-conf">
+                        <span class="conf-label">✅ Legitimate:</span>
+                        <span class="conf-value" id="legitConfidence">0%</span>
+                    </div>
+                    <div class="confidence-item phishing-conf">
+                        <span class="conf-label">⚠️ Phishing:</span>
+                        <span class="conf-value" id="phishingConfidence">0%</span>
+                    </div>
+                </div>
+
                 <div class="risk-badge" id="riskBadge">
                     <span class="risk-label">Risk Level:</span>
                     <span class="risk-value" id="riskValue">Low</span>
+                </div>
+
+                <!-- URL Features -->
+                <div class="features-section" id="featuresSection">
+                    <h4 class="section-title">📊 URL Analysis</h4>
+                    <div class="feature-grid" id="featureGrid"></div>
+                </div>
+
+                <!-- Network Analysis -->
+                <div class="network-section hidden" id="networkSection">
+                    <h4 class="section-title">🌐 Network Validation</h4>
+                    <div class="network-grid" id="networkGrid"></div>
                 </div>
 
                 <button class="scan-another-button" id="scanAnotherButton">
@@ -128,7 +153,7 @@
             <div class="feature-card">
                 <div class="feature-icon">🧠</div>
                 <h4>Machine Learning</h4>
-                <p>Random Forest classifier trained on phishing patterns</p>
+                <p>Logistic Regression classifier trained on phishing patterns</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
@@ -145,6 +170,7 @@
         <!-- Footer -->
         <footer class="footer">
             <p>Built with Flask, scikit-learn & AI • Protecting users from phishing attacks</p>
+            <p class="team-credits">Built and Designed by Vishnu Surya Teja, Prateek Mittal, Sailaxman, Manvith Soma</p>
         </footer>
     </div>
 
