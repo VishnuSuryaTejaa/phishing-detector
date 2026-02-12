@@ -56,7 +56,7 @@ Shows confidence scores and risk levels instantly
 
 ## ✨ Features
 
-- 🧠 **Machine Learning**: Random Forest classifier with 22+ URL features
+- 🧠 **Machine Learning**: Logistic Regression classifier with 22+ URL features
 - ⚡ **Real-time Analysis**: Instant URL scanning and classification
 - 🎨 **Modern UI**: Cybersecurity-themed design with glassmorphism effects
 - 🔒 **Privacy-focused**: No data storage, all analysis server-side
@@ -111,7 +111,7 @@ python train_model.py
 This will:
 - Generate synthetic training data (legitimate + phishing URLs)
 - Extract features from each URL
-- Train a Random Forest classifier
+- Train a Logistic Regression classifier
 - Save the model to `phishing_model.pkl`
 
 Expected output:
@@ -233,7 +233,7 @@ The model analyzes URLs based on:
 
 ### Model Training
 
-- **Algorithm**: Random Forest (100 trees, max depth 10)
+- **Algorithm**: Logistic Regression (100 trees, max depth 10)
 - **Training Data**: Synthetic dataset with 160 samples
   - 80 legitimate URLs (Google, GitHub, Amazon, etc.)
   - 80 phishing URLs (IP addresses, suspicious domains)
@@ -333,7 +333,7 @@ Deployment issues and environment setup
 
 # 🎥 Demo Video
 
-(Add your video link here)
+https://drive.google.com/file/d/1GUnzFUNd5gVF4gTKM-ZqG5daIO76e9xy/view?usp=sharing
 
 ## 📄 License
 
