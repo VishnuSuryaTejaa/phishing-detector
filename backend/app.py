@@ -9,29 +9,85 @@ import joblib
 import os
 from feature_extractor import URLFeatureExtractor
 
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import joblib
+import os
+import numpy as np
+from feature_extractor import URLFeatureExtractor
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
-# Load model and feature extractor
-MODEL_PATH = 'phishing_model.pkl'
-EXTRACTOR_PATH = 'feature_extractor.pkl'
-
+# Global variables
 model = None
 extractor = None
+vectorizer = None
+model_type = "unknown"  # 'legacy' (manual features) or 'tfidf' (vectorizer)
+
+# Paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, 'phishing_model.pkl')
+EXTRACTOR_PATH = os.path.join(BASE_DIR, 'feature_extractor.pkl')
+VECTORIZER_PATH = os.path.join(BASE_DIR, '..', 'vectorizer.pkl')  # Check root first
 
 def load_model():
-    """Load the trained model and feature extractor"""
-    global model, extractor
+    """Load the trained model and appropriate feature extractor"""
+    global model, extractor, vectorizer, model_type
     
-    if not os.path.exists(MODEL_PATH) or not os.path.exists(EXTRACTOR_PATH):
-        print("⚠️  Model files not found. Please run train_model.py first.")
+    print(f"Loading model from: {MODEL_PATH}")
+    
+    if not os.path.exists(MODEL_PATH):
+        print("⚠️  Model file not found. Please place 'phishing_model.pkl' in the backend directory.")
         return False
     
     try:
         model = joblib.load(MODEL_PATH)
-        extractor = joblib.load(EXTRACTOR_PATH)
         print("✓ Model loaded successfully!")
-        return True
+        
+        # Determine model type based on feature count
+        if hasattr(model, 'n_features_in_'):
+            n_features = model.n_features_in_
+            print(f"Model expects {n_features} features.")
+            
+            if n_features > 100:
+                print("Detected TF-IDF model architecture.")
+                model_type = 'tfidf'
+                
+                # Try loading vectorizer
+                if os.path.exists(VECTORIZER_PATH):
+                    vectorizer = joblib.load(VECTORIZER_PATH)
+                    print(f"✓ Vectorizer loaded from {VECTORIZER_PATH}")
+                    return True
+                elif os.path.exists(os.path.join(BASE_DIR, 'vectorizer.pkl')):
+                     vectorizer = joblib.load(os.path.join(BASE_DIR, 'vectorizer.pkl'))
+                     print(f"✓ Vectorizer loaded from backend directory")
+                     return True
+                else:
+                    print("❌ Error: TF-IDF model requires 'vectorizer.pkl'. File not found.")
+                    return False
+            else:
+                print("Detected Legacy (Manual Feature) model architecture.")
+                model_type = 'legacy'
+                
+                if os.path.exists(EXTRACTOR_PATH):
+                    extractor = joblib.load(EXTRACTOR_PATH)
+                    print("✓ Feature Extractor loaded.")
+                    return True
+                else:
+                    print("⚠️ Feature Extractor not found, initializing new one.")
+                    extractor = URLFeatureExtractor()
+                    return True
+        else:
+            print("⚠️ Model does not have 'n_features_in_' attribute. Assuming Legacy.")
+            model_type = 'legacy'
+            if os.path.exists(EXTRACTOR_PATH):
+                extractor = joblib.load(EXTRACTOR_PATH)
+            else:
+                extractor = URLFeatureExtractor()
+            return True
+            
     except Exception as e:
         print(f"✗ Error loading model: {e}")
         return False
@@ -42,7 +98,8 @@ def health_check():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'model_loaded': model is not None
+        'model_loaded': model is not None,
+        'model_type': model_type
     })
 
 
@@ -51,9 +108,9 @@ def predict():
     """Predict if a URL is phishing or legitimate"""
     
     # Check if model is loaded
-    if model is None or extractor is None:
+    if model is None:
         return jsonify({
-            'error': 'Model not loaded. Please train the model first.'
+            'error': 'Model not loaded. Please checkout the logs.'
         }), 503
     
     # Get URL from request
@@ -71,27 +128,78 @@ def predict():
             'error': 'URL cannot be empty'
         }), 400
     
+
     try:
-        # Extract features
-        features_dict = extractor.extract_features(url)
-        feature_vector = [[features_dict[name] for name in extractor.get_feature_names()]]
-        
-        # Make prediction
-        prediction = model.predict(feature_vector)[0]
-        probabilities = model.predict_proba(feature_vector)[0]
+        if model_type == 'tfidf':
+            # TF-IDF Prediction Path
+            if vectorizer is None:
+                 return jsonify({'error': 'Vectorizer not loaded for TF-IDF model'}), 500
+                 
+            feature_vector = vectorizer.transform([url])
+            prediction = model.predict(feature_vector)[0]
+            probabilities = model.predict_proba(feature_vector)[0]
+            
+            # Invert logic for TF-IDF model: 0 is Phishing, 1 is Legitimate
+            is_phishing = bool(prediction == 0)
+            classification = 'phishing' if is_phishing else 'legitimate'
+            confidence = {
+                'legitimate': float(probabilities[1]),
+                'phishing': float(probabilities[0])
+            }
+            confidence_score = float(max(probabilities))
+            
+            # Extract basic features for frontend display only (not used for prediction)
+            # We initialize a temporary extractor just for display purposes
+            temp_extractor = URLFeatureExtractor()
+            features_dict = temp_extractor.extract_features(url)
+            
+        else:
+            # Legacy Prediction Path
+            if extractor is None:
+                 return jsonify({'error': 'Extractor not loaded for legacy model'}), 500
+
+            features_dict = extractor.extract_features(url)
+            feature_vector = [[features_dict[name] for name in extractor.get_feature_names()]]
+            
+            prediction = model.predict(feature_vector)[0]
+            probabilities = model.predict_proba(feature_vector)[0]
+            
+            # Standard logic: 1 is Phishing, 0 is Legitimate
+            is_phishing = (prediction == 1)
+            classification = 'phishing' if is_phishing else 'legitimate'
+            confidence = {
+                'legitimate': float(probabilities[0]),
+                'phishing': float(probabilities[1])
+            }
+            confidence_score = float(max(probabilities))
         
         # Get network validation data
         from urllib.parse import urlparse
         try:
             parsed = urlparse(url)
-            domain = parsed.netloc or parsed.path.split('/')[0]
+            # Use hostname if available (handles ports for netloc), otherwise fallback to path
+            if parsed.netloc:
+                domain = parsed.hostname
+            else:
+                domain = parsed.path.split('/')[0]
+                # Remove port if present in path-only URL
+                if ':' in domain:
+                    domain = domain.split(':')[0]
             
             # Import network validator
             import sys
-            sys.path.append('Network_Validator')
+            
+            # Add Network_Validator to path if not present
+            nv_path = os.path.join(os.path.dirname(__file__), 'Network_Validator')
+            if nv_path not in sys.path:
+                sys.path.append(nv_path)
+                
             from network.network_validator import network_scan
             
-            network_data = network_scan(domain)
+            if domain:
+                network_data = network_scan(domain)
+            else:
+                network_data = None
         except Exception as e:
             print(f"Network validation failed: {e}")
             network_data = None
@@ -99,14 +207,11 @@ def predict():
         # Prepare response
         result = {
             'url': url,
-            'is_phishing': bool(prediction),
-            'classification': 'phishing' if prediction == 1 else 'legitimate',
-            'confidence': {
-                'legitimate': float(probabilities[0]),
-                'phishing': float(probabilities[1])
-            },
-            'confidence_score': float(max(probabilities)),
-            'risk_level': get_risk_level(probabilities[1]),
+            'is_phishing': is_phishing,
+            'classification': classification,
+            'confidence': confidence,
+            'confidence_score': confidence_score,
+            'risk_level': get_risk_level(confidence['phishing']),
             'features': {
                 'url_length': features_dict.get('url_length'),
                 'has_https': features_dict.get('has_https') == 1,
@@ -114,7 +219,8 @@ def predict():
                 'has_suspicious_tld': features_dict.get('has_suspicious_tld') == 1,
                 'num_suspicious_keywords': features_dict.get('num_suspicious_keywords'),
                 'domain_entropy': round(features_dict.get('domain_entropy', 0), 2)
-            }
+            },
+            'model_type': model_type
         }
         
         # Add network validation data if available
@@ -159,9 +265,9 @@ def get_risk_level(phishing_probability):
 def batch_predict():
     """Predict multiple URLs at once"""
     
-    if model is None or extractor is None:
+    if model is None:
         return jsonify({
-            'error': 'Model not loaded. Please train the model first.'
+            'error': 'Model not loaded.'
         }), 503
     
     data = request.get_json()
@@ -182,17 +288,36 @@ def batch_predict():
     
     for url in urls:
         try:
-            features_dict = extractor.extract_features(url)
-            feature_vector = [[features_dict[name] for name in extractor.get_feature_names()]]
-            
-            prediction = model.predict(feature_vector)[0]
-            probabilities = model.predict_proba(feature_vector)[0]
+            if model_type == 'tfidf':
+                if vectorizer is None:
+                    raise Exception("Vectorizer not loaded")
+                feature_vector = vectorizer.transform([url])
+                prediction = model.predict(feature_vector)[0]
+                probabilities = model.predict_proba(feature_vector)[0]
+                
+                # Invert logic: 0 is Phishing, 1 is Legitimate
+                is_phishing = bool(prediction == 0)
+                classification = 'phishing' if is_phishing else 'legitimate'
+                confidence_score = float(max(probabilities))
+                
+            else:
+                if extractor is None:
+                    raise Exception("Extractor not loaded")
+                features_dict = extractor.extract_features(url)
+                feature_vector = [[features_dict[name] for name in extractor.get_feature_names()]]
+                prediction = model.predict(feature_vector)[0]
+                probabilities = model.predict_proba(feature_vector)[0]
+                
+                # Standard logic: 1 is Phishing, 0 is Legitimate
+                is_phishing = (prediction == 1)
+                classification = 'phishing' if is_phishing else 'legitimate'
+                confidence_score = float(max(probabilities))
             
             results.append({
                 'url': url,
-                'is_phishing': bool(prediction),
-                'classification': 'phishing' if prediction == 1 else 'legitimate',
-                'confidence_score': float(max(probabilities))
+                'is_phishing': is_phishing,
+                'classification': classification,
+                'confidence_score': confidence_score
             })
         except Exception as e:
             results.append({
@@ -215,7 +340,8 @@ if __name__ == '__main__':
         print("   GET  /api/health")
         print("   POST /api/predict")
         print("   POST /api/batch-predict")
+        print(f"   Model Type: {model_type}")
         print("\n" + "="*50)
         app.run(debug=True, host='0.0.0.0', port=5001)
     else:
-        print("\n❌ Failed to start. Please run 'python train_model.py' first.")
+        print("\n❌ Failed to start. Please populate 'phishing_model.pkl' first.")
